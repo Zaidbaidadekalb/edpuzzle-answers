@@ -5,7 +5,7 @@ if (typeof document.dev_env != "undefined") {
 }
 else {
   //get resources off of github to not inflate the jsdelivr stats
-  base_url = "https://raw.githubusercontent.com/ading2210/edpuzzle-answers/main";
+  base_url = "https://raw.githubusercontent.com/Zaidbaidadekalb/edpuzzle-answers/main";
 }
 
 function http_get(url, callback, headers=[], method="GET", content=null) {
@@ -98,7 +98,7 @@ function getAssignment(callback) {
       openPopup(assignment);
     }
     else {
-      alert(`Error: Status code ${this.status} recieved when attempting to fetch the assignment data.`)
+      alert(`Error: Status code ${this.status} received when attempting to fetch the assignment data.`)
     }
   });
 }
@@ -123,216 +123,321 @@ function openPopup(assignment) {
   
   var base_html = `
   <!DOCTYPE html>
+  <html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Answers for: ${media.title}</title>
     <style>
-      * {font-family: Arial}
+      @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+      :root {
+        --bg-color: #1a1a1a;
+        --text-color: #e0e0e0;
+        --primary-color: #4fc3f7;
+        --secondary-color: #81c784;
+        --accent-color: #ff4081;
+      }
+      * {box-sizing: border-box; margin: 0; padding: 0;}
+      body {
+        font-family: 'Roboto', Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        transition: background-color 0.3s ease;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .thumbnail {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 20px;
+      }
+      .title-info h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .title-info p {
+        font-size: 14px;
+        color: #9e9e9e;
+      }
+      .note {
+        font-style: italic;
+        margin-top: 10px;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      button, select {
+        background-color: var(--primary-color);
+        color: #ffffff;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.1s;
+      }
+      button:hover, select:hover {
+        background-color: #3ba8d9;
+      }
+      button:active, select:active {
+        transform: scale(0.98);
+      }
+      button:disabled, select:disabled {
+        background-color: #616161;
+        cursor: not-allowed;
+      }
+      .hidden {
+        display: none;
+      }
+      #speed_container, #options_container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      #custom_speed {
+        width: 100%;
+        margin-top: 10px;
+      }
+      .question-container {
+        background-color: #2d2d2d;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+      .question-container:hover {
+        transform: translateY(-2px);
+      }
+      .question-header {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 10px;
+      }
+      .timestamp {
+        font-size: 14px;
+        color: #9e9e9e;
+        margin-right: 10px;
+      }
+      .question-content {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .choices {
+        list-style-type: none;
+        padding-left: 20px;
+      }
+      .choice {
+        margin-bottom: 5px;
+        transition: color 0.3s ease;
+      }
+      .choice-correct {
+        color: var(--secondary-color);
+      }
+      footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 12px;
+        color: #9e9e9e;
+      }
+      footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+      #notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+      .notification {
+        background-color: #333;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateX(50px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .notification.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .notification.success {
+        background-color: var(--secondary-color);
+      }
+      .notification.error {
+        background-color: var(--accent-color);
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
     </style>
     <script>
       var base_url = "${base_url}";
-      function http_get(url, callback) {
-        var request = new XMLHttpRequest();
-        request.addEventListener("load", callback);
-        request.open("GET", url, true);
-        request.send();
-      }
-      function get_tag(tag, url) {
-        console.log("Loading "+url);
-        http_get(url, function(){
-          if ((""+this.status)[0] == "2") {
-            var element = document.createElement(tag);
-            element.innerHTML = this.responseText;
-            document.getElementsByTagName("head")[0].appendChild(element);
-          }
-          else {
-            console.error("Could not fetch "+url);
-          }
-        });
-      }
-      get_tag("style", base_url+"/app/popup.css");
-      get_tag("script", base_url+"/app/popup.js");
-      get_tag("script", base_url+"/app/videooptions.js");
-      get_tag("script", base_url+"/app/videospeed.js");
     </script>
-    <title>Answers for: ${media.title}</title>
   </head>
-  <div id="header_div">
-    <div>
-      <img src="${thumbnail}" height="108px">
-    </div>
-    <div id="title_div">
-      <p style="font-size: 16px"><b>${media.title}</b></h2>
-      <p style="font-size: 12px">Uploaded by ${media.user.name} on ${date.toDateString()}</p>
-      <p style="font-size: 12px">Assigned on ${assigned_date.toDateString()}, ${deadline_text}</p>
-      <p style="font-size: 12px">Correct choices are <u>underlined</u>.</p>
-      <input id="skipper" type="button" value="Skip Video" onclick="skip_video();" disabled/>
-      <input id="answers_button" type="button" value="Answer Questions" onclick="answer_questions();" disabled/>
-      <div id="speed_container" hidden>
-        <label style="font-size: 12px" for="speed_dropdown">Video speed:</label>
-        <select name="speed_dropdown" id="speed_dropdown" onchange="video_speed()">
-          <option value="0.25">0.25</option>
-          <option value="0.5">0.5</option>
-          <option value="0.75">0.75</option>
-          <option value="1" selected>Normal</option>
-          <option value="1.25">1.25</option>
-          <option value="1.5">1.5</option>
-          <option value="1.75">1.75</option>
-          <option value="2">2</option>
-          <option value="-1">Custom</option>
-        </select>
-        <label id="custom_speed_label" style="font-size: 12px" for="custom_speed"></label>
-        <input type="range" id="custom_speed" name="custom_speed" value="1" min="0.1" max="16" step="0.1" oninput="video_speed()" hidden>
+  <body>
+    <div class="container">
+      <header>
+        <img src="${thumbnail}" alt="Thumbnail" class="thumbnail">
+        <div class="title-info">
+          <h1>${media.title}</h1>
+          <p>Uploaded by ${media.user.name} on ${date.toDateString()}</p>
+          <p>Assigned on ${assigned_date.toDateString()}, ${deadline_text}</p>
+          <p class="note">Correct choices are <u>underlined</u>.</p>
+        </div>
+      </header>
+      <div class="controls">
+        <button id="skipper" onclick="skip_video();" disabled>Skip Video</button>
+        <button id="answers_button" onclick="answer_questions();" disabled>Answer Questions</button>
+        <div id="speed_container" class="hidden">
+          <label for="speed_dropdown">Video speed:</label>
+          <select name="speed_dropdown" id="speed_dropdown" onchange="video_speed()">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>Normal</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="1.75">1.75x</option>
+            <option value="2">2x</option>
+            <option value="-1">Custom</option>
+          </select>
+          <label id="custom_speed_label" for="custom_speed"></label>
+          <input type="range" id="custom_speed" name="custom_speed" value="1" min="0.1" max="16" step="0.1" oninput="video_speed()" class="hidden">
+        </div>
+        <div id="options_container">
+          <label for="pause_on_focus">
+            <input type="checkbox" id="pause_on_focus" name="pause_on_focus" onchange="toggle_unfocus();">
+            Don't pause on unfocus
+          </label>
+        </div>
       </div>
-      <div id="options_container">
-        <label for="pause_on_focus" style="font-size: 12px">Don't pause on unfocus: </label>
-        <input type="checkbox" id="pause_on_focus" name="pause_on_focus" onchange="toggle_unfocus();">
-      </div>
+      <main id="content">
+        <p id="loading_text"></p>
+      </main>
+      <footer>
+        <p>Made by: <a href="https://github.com/ading2210" target="_blank">ading2210</a> on Github | Website: <a href="https://edpuzzle.hs.vc" target="_blank">edpuzzle.hs.vc</a> | Source code: <a href="https://github.com/ading2210/edpuzzle-answers" target="_blank">ading2210/edpuzzle-answers</a></p>
+        <p>Licenced under the <a href="https://github.com/ading2210/edpuzzle-answers/blob/main/LICENSE" target="_blank">GNU GPL v3</a>. Do not reupload or redistribute without abiding by those terms.</p>
+        <p>Available now from our <a href="https://edpuzzle.hs.vc/discord.html" target="_blank">Discord server</a>: <i>An open beta of a completely overhauled GUI, with proper mobile support, ChatGPT integration for open-ended questions, and more.</i></p>
+      </footer>
     </div>
-  </div>
-  <hr>
-  <div id="content"> 
-    <p style="font-size: 12px" id="loading_text"></p>
-  </div>
-  <hr>
-  <p style="font-size: 12px">Made by: <a target="_blank" href="https://github.com/ading2210">ading2210</a> on Github | Website: <a target="_blank" href="https://edpuzzle.hs.vc">edpuzzle.hs.vc</a> | Source code: <a target="_blank" href="https://github.com/ading2210/edpuzzle-answers">ading2210/edpuzzle-answers</a></p>
-  <p style="font-size: 12px">Licenced under the <a target="_blank" href="https://github.com/ading2210/edpuzzle-answers/blob/main/LICENSE">GNU GPL v3</a>. Do not reupload or redistribute without abiding by those terms.</p>
-  <p style="font-size: 12px">Available now from our <a target="_blank" href="https://edpuzzle.hs.vc/discord.html">Discord server</a>: <i> An open beta of a completely overhauled GUI, with proper mobile support, ChatGPT integration for open-ended questions, and more. </i></p>`;
-  popup = window.open("about:blank", "", "width=600, height=400");
+    <div id="notification-container"></div>
+  </body>
+  </html>`;
+  
+  popup = window.open("", "Answers", "width=600, height=400, top=100, left=100");
   popup.document.write(base_html);
-
-  popup.document.assignment = assignment;
-  popup.document.dev_env = document.dev_env;
-  popup.document.edpuzzle_data = window.__EDPUZZLE_DATA__;
+  popup.document.close();
   
-  getMedia(assignment);
-}
-
-function getMedia(assignment) {
-  var text = popup.document.getElementById("loading_text");
-  text.innerHTML = `Fetching assignments...`;
+  http_get(base_url+"/app/popup.js", function(){
+    popup.eval(this.responseText);
+  });
   
-  var media_id = assignment.teacherAssignments[0].contentId;
-  var url2 = `https://edpuzzle.com/api/v3/media/${media_id}`;
-
-  fetch(url2, {credentials: "omit"})
-    .then(response => {
-      if (!response.ok) {
-        var text = popup.document.getElementById("loading_text");
-        var content = popup.document.getElementById("content");
-        popup.document.questions = questions;
-        text.remove();
-        content.innerHTML += `Error: Status code ${response.status} received when attempting to fetch the answers.`;
-      }
-      else return response.json();
-    })
-    .then(media => {
-      parseQuestions(media.questions);
-    })
-}
-
-function parseQuestions(questions) {
-  var text = popup.document.getElementById("loading_text");
   var content = popup.document.getElementById("content");
-  popup.document.questions = questions;
-  text.remove();
-
-  if (questions == null) {
-    content.innerHTML += `<p style="font-size: 12px">Error: Could not get the media for this assignment. </p>`;
-    return;
-  }
+  var loading_text = popup.document.getElementById("loading_text");
   
-  var question;
-  var counter = 0;
-  var counter2 = 0;
-  for (let i=0; i<questions.length; i++) {
-    for (let j=0; j<questions.length-i-1; j++) {
-      if (questions[j].time > questions[j+1].time){
-       let question_old = questions[j];
-       questions[j] = questions[j + 1];
-       questions[j+1] = question_old;
-     }
-    }
-  }
-  
-  for (let i=0; i<questions.length; i++) {
-    question = questions[i];
-    let choices_lines = [];
-    
-    if (typeof question.choices != "undefined") {
-      let min = Math.floor(question.time/60).toString();
-      let secs = Math.floor(question.time%60).toString();
-      if (secs.length == 1) {
-        secs = "0"+secs;
+  function get_question_data() {
+    var tasks = assignment.teacherAssignments[0].tasks;
+    var questions = [];
+    for (let i=0; i<tasks.length; i++) {
+      let task = tasks[i];
+      if (task.type == "multiple-choice") {
+        questions.push(task);
       }
-      let timestamp = min+":"+secs;
-      let question_content;
-      if (question.body[0].text != "") {
-        question_content = `<p>${question.body[0].text}</p>`;
+    }
+    return questions;
+  }
+  
+  function format_question(question) {
+    var text = question.body[0].text;
+    var html = `<p>${text}</p>`;
+    return html;
+  }
+  
+  function format_choices(choices, correct_answer) {
+    var html = "";
+    for (let i=0; i<choices.length; i++) {
+      let choice = choices[i];
+      if (i == correct_answer) {
+        html += `<li class="choice choice-correct"><u>${choice}</u></li>`;
       }
       else {
-        question_content = question.body[0].html;
+        html += `<li class="choice">${choice}</li>`;
       }
-
-      let answer_exists = false;
-      for (let j=0; j<question.choices.length; j++) {
-        let choice = question.choices[j];
-        if (typeof choice.body != "undefined") {
-          counter++;
-          let item_html;
-          if (choice.body[0].text != "") {
-            item_html = `<p>${choice.body[0].text}</p>`;
-          }
-          else {
-            item_html = `${choice.body[0].html}`;
-          }
-          if (choice.isCorrect == true) {
-            choices_lines.push(`<li class="choice choice-correct">${item_html}</li>`);
-            answer_exists = true;
-          }
-          else {
-            choices_lines.push(`<li class="choice">${item_html}</li>`);
-          }
-        }
-      }
-      if (!answer_exists) continue;
-      
-      let choices_html = choices_lines.join("\n");
-      let table = ``
-      if (counter2 != 0) {
-        table += `<hr>`;
-      }
-      table += `
-      <table>
-        <tr class="header no_vertical_margin">
-          <td class="timestamp_div no_vertical_margin">
-            <p>[${timestamp}]</p>
-          </td>
-          <td class="question">
-            ${question_content}
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>
-            <ul style="margin-top: 6px; margin-bottom: 0px; padding-left: 18px;">
-              ${choices_html}
-            </ul>
-          </td>
-        </tr>
-      </table>
-      `;
-      
-      content.innerHTML += table;
-      counter2++;
     }
+    return html;
   }
-  popup.document.getElementById("skipper").disabled = false;
-  if (counter == 0 || counter2 == 0) {
-    content.innerHTML += `<p style="font-size: 12px">No valid multiple choice questions were found.</p>`;
-  }
-  else {
+  
+  function parseQuestions(questions) {
+    var counter = 0;
+    var counter2 = 0;
+    content.innerHTML = "";
+    
+    for (let i=0; i<questions.length; i++) {
+      let question = questions[i];
+      let choices_html = format_choices(question.choices, question.correctAnswer);
+      let question_html = format_question(question);
+      counter++;
+      
+      let minutes = Math.floor(question.time/60);
+      let seconds = question.time%60;
+      if (seconds < 10) {
+        seconds = "0"+seconds;
+      }
+      let timestamp = minutes+":"+seconds;
+      
+      if (typeof question.choices != "undefined") {
+        let table = `
+        <div class="question-container">
+          <div class="question-header">
+            <span class="timestamp">[${timestamp}]</span>
+            <div class="question-content">${question_html}</div>
+          </div>
+          <ul class="choices">
+            ${choices_html}
+          </ul>
+        </div>
+        `;
+        
+        content.innerHTML += table;
+        counter2++;
+      }
+    }
+    
+    loading_text.innerHTML = `Found ${counter2}/${counter} questions.`;
+    popup.document.getElementById("skipper").disabled = false;
     popup.document.getElementById("answers_button").disabled = false;
+    popup.document.getElementById("speed_container").classList.remove("hidden");
+    
+    popup.animateQuestions();
+    popup.showNotification("Questions loaded successfully!", "success");
   }
-  popup.questions = questions;
+  
+  parseQuestions(get_question_data());
 }
 
 init();
